@@ -1,0 +1,19 @@
+../simple-1 alpha8.00/epsilon1.00/res 30 1000 0.001 100000.0 8.00 2 0.8 0.4 0 1 0 3 1.00 6589 600 9999 20000.0 20000.0 2000.0 
+L is 30
+N is 1000
+dt is 0.001
+final_time is 100000
+alpha is 8
+v0 is 2
+a1 is 0.8
+a2 is 0.4
+b1 is 0
+b2 is 1
+d is 0
+P is 3
+epsilon is 1
+Nbin is 600
+NstepProfile is 9999
+StoreInterProfile is 20000
+StoreInterPos is 20000
+StoreInterDisp is 2000

@@ -1,0 +1,17 @@
+./run.x amp=0.54/batch26/results 10 25 0.0005 60000000 1 20 1.0 0.8 1 1.0 0.54 20623 100 299999 600000 6000000 600000 
+L is 10
+N is 25
+dt is 0.0005
+final_time is 6e+07
+alpha is 1
+v0 is 20
+a1 is 1
+a2 is 0.8
+P is 1
+sigma is 1
+amp is 0.54
+Nbin is 100
+NstepProfile is 299999
+StoreInterProfile is 600000
+StoreInterPos is 6e+06
+StoreInterDisp is 600000

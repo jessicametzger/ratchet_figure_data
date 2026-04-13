@@ -1,0 +1,20 @@
+ABP/abp-int ABP-int 80 50 800 0.00025 10000.0 1 5 0,40,42.5,62.5,75 20,20,1,1,20 1 50 9826 10000 800 1 5000 10000 2 100 
+Lx is 80
+Ly is 50
+N is 800
+dt is 0.00025
+tf is 10000
+tau is 1
+Nstep_v is 5
+vx1,vx2,... is 0,40,42.5,62.5,75
+v1,v2,... is 20,20,1,1,20
+a is 1
+k is 50
+seed is 9826
+StoreInterPos is 10000
+Nbinx is 800
+Nbiny is 1
+NstepProf is 5000
+StoreInterProf is 10000
+UpdateInterProf is 2
+StoreInterDisp is 100

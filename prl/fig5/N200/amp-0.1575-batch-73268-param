@@ -1,0 +1,17 @@
+../ratchet-pfaps new_L10_dt0.001_v020_a11_a20.8/N200/amp-0.1575-batch-73268 10 200 0.0005 4000000.0 1 20 1 0.8 1 1 0.1575 73268 100 49999 100000 100000 10000 
+L is 10
+N is 200
+dt is 0.0005
+final_time is 4e+06
+alpha is 1
+v0 is 20
+a1 is 1
+a2 is 0.8
+P is 1
+sigma is 1
+amp is 0.1575
+Nbin is 100
+NstepProfile is 49999
+StoreInterProfile is 100000
+StoreInterPos is 100000
+StoreInterDisp is 10000

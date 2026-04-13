@@ -1,0 +1,24 @@
+./Tofx-od-euler T_step/Lx80_Ly50_T11_Tcl2.5_Tcr25_Tr35_P1_N800_dt0.001/123/res 80 50 800 0.00025 1000000.0 20 1 1 0 2.5 22.5 35 1 1 50 123 800 1 500 1000 1000 1000 1.99 
+Lx is 80
+Ly is 50
+N is 800
+dt is 0.00025
+final_time is 1e+06
+T0 is 20
+T1 is 1
+T_left is 0
+T_center1 is 2.5
+T_center2 is 22.5
+T_right is 35
+T_P is 1
+mu0 is 1
+sigma is 1
+amp is 50
+seed is 123
+Nbinx is 800
+Nbiny is 1
+NstepProfile is 500
+StoreInterProfile is 1000
+StoreInterPos is 1000
+StoreInterDisp is 1000
+UpdateInterProfile is 1.99

@@ -1,0 +1,21 @@
+/home/jessica/Code/particles/Brownian/OD/pbp-cub-disp-prof-sigIK-epr test 50 15 400 0.0005 1000 1337 4 0,8,17,41 10,1,1,10 1 50 10000 10 500 150 200 10 0.05 
+Lx is 50
+Ly is 15
+N is 400
+dt is 0.0005
+tf is 1000
+seed is 1337
+Nstep_T is 4
+Txs is 0,8,17,41
+Ts is 10,1,1,10
+a is 1
+k is 50
+StoreInterPos is 10000
+StoreInterDisp is 10
+Nbinx is 500
+Nbiny is 150
+NstepProf is 200
+StoreInterProf is 10
+UpdateInterProf is 0.05
+
+run_time = 98.1 s
