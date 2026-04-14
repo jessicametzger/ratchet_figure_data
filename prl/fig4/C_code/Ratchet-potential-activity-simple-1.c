@@ -11,13 +11,14 @@ Similar to Ratchet-potential-activity-simple.c except the following differences:
 
 #include <string.h>
 #include <stdio.h>
-#include "./options.h"
 #include <stdlib.h>
 #include <math.h>
 #include <time.h> // Library that measures dates and times
 #include <assert.h>
 
 #include "./mt19937-64.c" // random number generator
+
+#define EPS 1e-10
 
 // param is a structure that contains data which are given to
 // functions that run the simulations
@@ -50,9 +51,6 @@ typedef struct param{
   double StoreInterProfile;        // Interval between 2 storages of the pos profile
   double StoreInterPos;            // Interval between 2 storages of the position
   double StoreInterDisp;           // Interval between 2 storages of net displacements
-#ifdef TRACK
-  double Ntrack;                   // number of particles whose complete trajectory to track
-#endif
 } param;
   
 // Structure particle contains all the data needed to characterize the state of a particle
@@ -84,9 +82,6 @@ int main(int argc, char* argv[]){
   FILE* output_pos;                // File where position is stored
   FILE* output_disp;               // File where integrate displacements are stored
   FILE* output_traj;               // File where complete trajectories are stored
-#ifdef STORE_U
-  FILE* output_pot;                // File where potential is stored
-#endif
   long long seed;                  //  Seed of random number generator
 
   double NextStoreProfile;         // Next time after which the position profile is stored
@@ -104,9 +99,6 @@ int main(int argc, char* argv[]){
   
   Initialize_parameters(argc, argv, 
   &output_param, &output_profile_rho, &output_profile_m, &output_pos, &output_disp, &output_traj, 
-#ifdef STORE_U
-  &output_pot,
-#endif
   &Param, &_time, &prev_percentage, &Particles, &Displacements, &Integrated_Displacements, &profile_rho, &profile_m, &seed, 
   &NextStoreProfile, &NextUpdateProfile, &NextStorePos, &NextStoreDisp);
   
@@ -147,11 +139,6 @@ int main(int argc, char* argv[]){
     if(_time>NextStorePos-EPS){
       Store_Pos(Param,Particles,_time,output_pos);
       NextStorePos += Param.StoreInterPos;
-  
-      // If we are storing any complete trajectories, fflush them now.
-#ifdef TRACK
-      fflush(output_traj);
-#endif
     }
     
     // If the time is right, store the integrated displacements
@@ -159,12 +146,6 @@ int main(int argc, char* argv[]){
       Store_Disp(Param,Integrated_Displacements,_time,output_disp);
       NextStoreDisp += Param.StoreInterDisp;
     }
-    
-#ifdef TRACK
-    if (Param.Ntrack>0) {
-      Store_Trajectories(Param,Particles, output_traj, _time);
-    }
-#endif
   }
   printf("\n");
 

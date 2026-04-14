@@ -1,0 +1,21 @@
+PBP/pbp-int PBP-int 80 50 800 0.00025 10000.0 8761 5 0,40,42.5,62.5,75 20,20,1,1,20 1 50 10000 100 800 1 5000 10000 2 
+Lx is 80
+Ly is 50
+N is 800
+dt is 0.00025
+tf is 10000
+seed is 8761
+Nstep_T is 5
+Txs is 0,40,42.5,62.5,75
+Ts is 20,20,1,1,20
+a is 1
+k is 50
+StoreInterPos is 10000
+StoreInterDisp is 100
+Nbinx is 800
+Nbiny is 1
+NstepProf is 5000
+StoreInterProf is 10000
+UpdateInterProf is 2
+
+run_time = 2410.1 s

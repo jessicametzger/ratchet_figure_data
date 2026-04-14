@@ -1,30 +1,21 @@
-../inv_h-Tofx-cubic-epr-sigmaik res 50 15 400 0.0005 1e5 10 1 1 1 0 5 15 30 1 50 123 500 150 1e4 2e6 5e-3 1e4 2e7 5e-4 1e4 2e6 5e-3 10000 10000 
+/home/jessica/Code/particles/Brownian/OD/pbp-cub-disp-prof-sigIK-epr res 50 15 400 0.0005 100000 1337 4 0,8,17,41 10,1,1,10 1 50 100000 1000 500 150 20000 1000 0.005 
 Lx is 50
 Ly is 15
 N is 400
 dt is 0.0005
-final_time is 100000
-T0 is 10
-T_P is 1
-T1 is 1
-T_left is 0
-T_center1 is 5
-T_center2 is 15
-T_right is 30
-mu0 is 1
-sigma is 1
-amp is 50
-seed is 123
+tf is 100000
+seed is 1337
+Nstep_T is 4
+Txs is 0,8,17,41
+Ts is 10,1,1,10
+a is 1
+k is 50
+StoreInterPos is 100000
+StoreInterDisp is 1000
 Nbinx is 500
 Nbiny is 150
-StoreInterProfile is 10000
-NstepProfile is 2000000
-UpdateInterProfile is 0.005
-StoreInterEPR is 10000
-NstepEPR is 20000000
-UpdateInterEPR is 0.0005
-StoreInterSigmaIK is 10000
-NstepSigmaIK is 2000000
-UpdateInterSigmaIK is 0.005
-StoreInterPos is 10000
-StoreInterDisp is 10000
+NstepProf is 20000
+StoreInterProf is 1000
+UpdateInterProf is 0.005
+
+run_time = 23802.4 s

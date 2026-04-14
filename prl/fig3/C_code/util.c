@@ -10,16 +10,6 @@ void ERROR(char* msg){
   exit(1);
 }
 
-/// whether point x,y is inside triangle defined by given coordinates
-bool inside_triangle(double x, double y, double x1, double y1, double x2, double y2, double x3, double y3){
-  double a,b,c,d;
-  d = (y2-y3)*(x1-x3) - (x2-x3)*(y1-y3);
-  a = ((y2-y3)*(x-x3) - (x2-x3)*(y-y3))/d;
-  b = ((x1-x3)*(y-y3) - (y1-y3)*(x-x3))/d;
-  c = 1-a-b;
-  return (a>=0) && (b>=0) && (c>=0);
-}
-
 
 void split_vec(int Nexpect, double** output, const char* input, char delimiter){
     int count = 1;

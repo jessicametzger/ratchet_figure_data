@@ -3,9 +3,6 @@
 
 void Initialize_parameters(int argc, char* argv[],
   FILE** output_param, FILE** output_profile_rho, FILE** output_profile_m, FILE** output_pos, FILE** output_disp, FILE** output_traj,
-#ifdef STORE_U
-  FILE** output_pot,
-#endif
   param* Param, double* _time, double* prev_percentage,
   particle** Particles,double** Displacements, double** Integrated_Displacements,
   long** profile_rho, long** profile_m,
@@ -44,9 +41,6 @@ void Initialize_parameters(int argc, char* argv[],
   strcat(command_base, "StoreInterProfile "); argctarget ++;
   strcat(command_base, "StoreInterPos "); argctarget ++;
   strcat(command_base, "StoreInterDisp "); argctarget ++;
-#ifdef TRACK
-  strcat(command_base, "Ntrack "); argctarget++;
-#endif
 
   strcat(command_base, "\n");
 
@@ -75,16 +69,6 @@ void Initialize_parameters(int argc, char* argv[],
   sprintf(name,"%s-disp",argv[i]);
   output_disp[0]=fopen(name,"w");
   
-#ifdef TRACK
-  sprintf(name,"%s-traj",argv[i]);
-  output_traj[0]=fopen(name,"w");
-#endif
-  
-#ifdef STORE_U
-  sprintf(name,"%s-pot",argv[i]);
-  output_pot[0]=fopen(name,"w");
-#endif
-  
   i++;
   
   // Read in basic parameters
@@ -107,10 +91,6 @@ void Initialize_parameters(int argc, char* argv[],
   Param[0].StoreInterProfile  = strtod(argv[i], NULL); i++;
   Param[0].StoreInterPos      = strtod(argv[i], NULL); i++;
   Param[0].StoreInterDisp     = strtod(argv[i], NULL); i++;
-  
-#ifdef TRACK
-  Param[0].Ntrack             = strtod(argv[i], NULL); i++;
-#endif
   
   // define parameters that are functions of the inputs and/or known
   NextStoreProfile[0]         = Param[0].StoreInterProfile;
@@ -145,7 +125,6 @@ void Initialize_parameters(int argc, char* argv[],
   memset(profile_m[0],0,Param[0].Nbin*sizeof(long));
 
 // initialize particle locations and polarizations  
-#ifdef RANDOM_IC
   for (i=0;i<Param[0].N;i++){
   
     // random initialize positions uniformly over interval
@@ -157,7 +136,6 @@ void Initialize_parameters(int argc, char* argv[],
     // initialize next flip time from exponential distribution
     Particles[0][i].next_time = -2*log(genrand64_real3())/Param[0].alpha;
   }
-#endif
 }
 
 /*
@@ -209,15 +187,10 @@ void Update_Particles(param Param,double* Displacements,particle* Particles, dou
     Particles[n].x += Displacements[n];
 
     // Take care of periodic boundary conditions
-#ifdef PBC
-    while(Particles[n].x>Param.L){
+    while(Particles[n].x>Param.L)
       Particles[n].x-=Param.L;
-    }
-
-    while(Particles[n].x<0){
+    while(Particles[n].x<0)
       Particles[n].x+=Param.L;
-    }
-#endif
 
     // Update the cumulated displacements
     Integrated_Displacements[n] += Displacements[n];
@@ -268,9 +241,6 @@ void Store_Parameters(int argc, char* argv[], FILE* output_param, param Param,
   fprintf(output_param,"StoreInterProfile is %lg\n", Param.StoreInterProfile);
   fprintf(output_param,"StoreInterPos is %lg\n", Param.StoreInterPos);
   fprintf(output_param,"StoreInterDisp is %lg\n", Param.StoreInterDisp);
-#ifdef TRACK
-  fprintf(output_param,"Ntrack is %lg\n", Param.Ntrack);
-#endif
   fflush(output_param);
 }
 
@@ -322,15 +292,3 @@ void Store_Profile(param Param,particle* Particles, long** profile_rho, long** p
   memset(profile_rho[0],0,Param.Nbin*sizeof(long));
   memset(profile_m[0],0,Param.Nbin*sizeof(long));
 }
-
-#ifdef TRACK
-// Store the complete trajectories (position and polarization) of first Ntrack particles
-void Store_Trajectories(param Param, particle* Particles, FILE* output_traj, double _time){
-  long n; //particle index
-  
-  for (n=0; n<Param.Ntrack; n++){
-    fprintf(output_traj,"%lg\t%ld\t%lg\t%lg\n",_time,n,Particles[n].x,Particles[n].theta);
-  }
-}
-#endif
-

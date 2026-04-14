@@ -1,84 +1,3 @@
-/*
-	Pairwise forces functions.
-*/
-
-
-/*
-  WCA: F = -\grad V where
-  
-  V=4 epsilon (sigma^12/r^12-sigma^6/r^6) + epsilon
-  
-  so the force magnitude is
-  
-  F = 4 epsilon (12 sigma^12 / r^13 - 6 sigma^6 / r^7)
-  
-  We use the LJ potential with a cut-off at r=sigma*2^1/6
-*/
-#ifdef FORCE_WCA
-// c1=4*12*dt*amp*sigma^12, c2=-24*amp*sigma^6
-double get_force_WCA_params(double k, double a, double mu, double dt, double* c1, double* c2){
-  c1[0] = 4*12*dt*k*mu*pow(a,12);
-  c2[0] = -24*dt*k*mu*pow(a,6);
-}
-double Force_WCA(double dist, double dist2, double c1, double c2){
-  double dist6=dist2*dist2*dist2;
-  double dist7=dist6*dist;
-  double dist13=dist7*dist6;
-  return c1/dist13 + c2/dist7;
-}
-#endif
-
-
-/*
-  QUARTIC:  F = -grad V where
-
-  V(r) = k*(-3(r/a)^4 + 4(r/a)^3 (1+r0/a) - 6(r/a)^2 (r0/a) + 2r0/a - 1) / (2r0/a - 1)
-
-  so that F(0)=F(r0)=F(a)=0, V(0) = 1, and V(a) = 0.
-  If r0=a/2, throws error. If r0<a/2, then it's a local maximum. 
-  If r0>a, then there's no local minimum
-
-  see: https://www.desmos.com/calculator/2eptglk46v
-*/
-#ifdef FORCE_QUARTIC 
-double get_force_quartic_params(double k, double a, double mu, double dt, double r0,
-  double* c1, double* c2, double* c3){
-  c3[0] = k * dt * mu * 12 / pow(a,4) / (2*r0/a - 1);
-  c2[0] = k * dt * mu * (-12) * (1+r0/a) / pow(a,3) / (2*r0/a - 1);
-  c1[0] = k * dt * mu * 12 * (r0/a) / pow(a,2) / (2*r0/a - 1);
-}
-double Force_quartic(double dist, double dist2, double c1, double c2, double c3){
-  double dist3 = dist2*dist;
-	return c3*dist3 + c2*dist2 + c1*dist;
-}
-#endif
-
-
-/*
-  CUBIC:  F = -grad V where
-
-  V(r) = k*(-2(r/a)^3 + 3(r/a)^2 (1+r0/a) - 6(r/a)(r0/a) + 3r0/a - 1) / (3r0/a - 1)
-
-  so that F(r0)=F(a)=0, V(0) = 1, and V(a) = 0.
-
-  If r0=a/3, throws error. If r0<a/3, then it's a local maximum. 
-  If r0>a, then there's no local minimum
-
-  see: https://www.desmos.com/calculator/2eptglk46v
-*/
-#ifdef FORCE_CUBIC
-double get_force_cubic_params(double k, double a, double mu, double dt, double r0,
-  double* c1, double* c2, double* c3){
-  c3[0] = k * dt * mu * 6 / pow(a,3) / (3*r0/a - 1);
-  c2[0] = k * dt * mu * (-6) * (1+r0/a) / pow(a,2) / (3*r0/a - 1);
-  c1[0] = k * dt * mu * 6 * (r0/a) / a / (3*r0/a - 1);
-}
-double Force_cubic(double dist, double dist2, double c1, double c2, double c3){
-  double dist3 = dist2*dist;
-  return c3*dist3 + c2*dist2 + c1*dist;
-}
-#endif
-
 
 /*
   HARMONIC: We use harmonic spheres F = -\grad V where
@@ -91,7 +10,6 @@ double Force_cubic(double dist, double dist2, double c1, double c2, double c3){
   
   We use a cut-off at r=sigma 
 */
-#ifdef FORCE_HARMONIC
 double get_force_harmonic_params(double k, double a, double mu, double dt, double* c1, double* c2){
   c1[0] = k * dt * mu;
   c2[0] = -k * dt * mu / a;
@@ -99,49 +17,6 @@ double get_force_harmonic_params(double k, double a, double mu, double dt, doubl
 double Force_harmonic(double dist, double c1, double c2){
 	return c1 + c2*dist;
 }
-#endif
-
-
-
-/*
-  INV_HARMONIC: We use V(r) = (amp sigma / 2) (1 - (r/sigma)^2)
-  
-  and force magnitude
-  
-  F(r_i-r_j) = amp |r_i-r_j| / sigma
-  
-  We use a cut-off at r=sigma
-*/
-#ifdef FORCE_IHARMONIC
-double get_force_iharmonic_params(double k, double a, double mu, double dt, double* c1){
-  c1[0] = k * dt * mu / a;
-}
-double Force_iharmonic(double dist, double c1){
-	return c1*dist;
-}
-#endif
-
-
-/*
-  "tent" potential
-  
-  V(r) = amp sigma (1-|r|/sigma)
-  
-  F(r) = amp 
-  
-  We use a cut-off at r=sigma
-*/
-#ifdef FORCE_LINEAR
-double get_force_linear_params(double k, double mu, double dt, double* c1){
-  c1[0] = k * dt * mu;
-}
-double Force_linear(double c1){
-	return c1;
-}
-#endif
-
-
-#ifndef ONED
 
 // given (corrected) distances dx,dy and indices j,k, update forces (stored in "Particles").
 // ASSUME THEY ARE CLOSE ENOUGH TO INTERACT!
@@ -150,27 +25,13 @@ void Pair_force(double dx, double dy, double dist2, long j, long k, particle* Pa
 
   double dist=pow(dist2,0.5);
 
-#ifdef FORCE_WCA
-  Force = Force_WCA(dist,dist2,Param.c1,Param.c2);
-#elif defined(FORCE_QUARTIC)
-  Force = Force_quartic(dist,dist2,Param.c1,Param.c2,Param.c3);
-#elif defined(FORCE_CUBIC)
-  Force = Force_cubic(dist,dist2,Param.c1,Param.c2,Param.c3);
-#elif defined(FORCE_IHARMONIC)
-  Force = Force_iharmonic(dist,Param.c1);
-#elif defined(FORCE_HARMONIC)
   Force = Force_harmonic(dist,Param.c1,Param.c2);
-#elif defined(FORCE_LINEAR)
-  Force = Force_linear(Param.c1);
-#endif
   Forcex = Force*dx/dist;
   Forcey = Force*dy/dist;
-#ifdef STORE_SIGMAIKPROF
   Particles[j].ifxs[k] = Forcex;
   Particles[j].ifys[k] = Forcey;
   Particles[k].ifxs[j] = -Forcex;
   Particles[k].ifys[j] = -Forcey;
-#endif
   Particles[j].ifx    += Forcex;
   Particles[j].ify    += Forcey;
   Particles[k].ifx    -= Forcex;
@@ -253,7 +114,6 @@ void Loop_Force(param Param, particle* Particles, long* Neighbours, long** Boxes
 }
 
 
-#ifdef STORE_SIGMAIKPROF
 void Update_SigmaIK(param Param, particle* Particles, data* Data){
   long j,k;                                                     // Particle ids
   int bi,bj,nbi,nbj,nbi1,nbj1,m;                                // box coordinates
@@ -267,21 +127,12 @@ void Update_SigmaIK(param Param, particle* Particles, data* Data){
 
   for (j=0; j<Param.N; j++){
 
-#if !defined(CENTER_X) & !defined(CENTER_Y)
     x = Particles[j].x - Particles[j].dx;
     y = Particles[j].y - Particles[j].dy;
-#else
-    x = Particles[j].xshift - Particles[j].dx;
-    y = Particles[j].yshift - Particles[j].dy;
-#endif
-#ifndef CBC_X
     while(x>Param.Lx) x-=Param.Lx;
     while(x<0) x+=Param.Lx;
-#endif
-#ifndef CBC_Y
     while(y>Param.Ly) y-=Param.Ly;
     while(y<0) y+=Param.Ly;
-#endif
     bi = (int) (floor(x/Param.rmax) + EPS);
     bj = (int) (floor(y/Param.rmax) + EPS);
     
@@ -292,21 +143,12 @@ void Update_SigmaIK(param Param, particle* Particles, data* Data){
 
     for (k=0; k<Param.N; k++){
       if (k==j) continue;
-#if !defined(CENTER_X) & !defined(CENTER_Y)
       xn = Particles[k].x - Particles[k].dx;
       yn = Particles[k].y - Particles[k].dy;
-#else
-      xn = Particles[k].xshift - Particles[k].dx;
-      yn = Particles[k].yshift - Particles[k].dy;
-#endif
-#ifndef CBC_X
       while(xn>Param.Lx) xn-=Param.Lx;
       while(xn<0) xn+=Param.Lx;
-#endif
-#ifndef CBC_Y
       while(yn>Param.Ly) yn-=Param.Ly;
       while(yn<0) yn+=Param.Ly;
-#endif
       nbi = (int) (floor(xn/Param.rmax) + EPS);
       nbj = (int) (floor(yn/Param.rmax) + EPS);
 
@@ -451,126 +293,3 @@ void Update_SigmaIK(param Param, particle* Particles, data* Data){
     }
   }
 }
-#endif
-
-#elif defined(ONED)
-
-// given (corrected) distance dx and indices j,k, update forces (stored in "Particles").
-// ASSUME THEY ARE CLOSE ENOUGH TO INTERACT!
-void Pair_force(double dx, double dist, long j, long k, particle* Particles, param Param){
-  double Force,Forcex,Forcey;
-
-#if defined(FORCE_CUBIC) || defined(FORCE_QUARTIC) || defined(FORCE_WCA)
-  double dist2=dist*dist;
-#endif
-
-#ifdef FORCE_WCA
-  Force = Force_WCA(dist,dist2,Param.c1,Param.c2);
-#elif defined(FORCE_QUARTIC)
-  Force = Force_quartic(dist,dist2,Param.c1,Param.c2,Param.c3);
-#elif defined(FORCE_CUBIC)
-  Force = Force_cubic(dist,dist2,Param.c1,Param.c2,Param.c3);
-#elif defined(FORCE_IHARMONIC)
-  Force = Force_iharmonic(dist,Param.c1);
-#elif defined(FORCE_HARMONIC)
-  Force = Force_harmonic(dist,Param.c1,Param.c2);
-#elif defined(FORCE_LINEAR)
-  Force = Force_linear(Param.c1);
-#endif
-  Forcex = (dx>0)?Force:(-Force);
-#ifdef STORE_SIGMAIKPROF
-  Particles[j].ifxs[k] = Forcex;
-  Particles[k].ifxs[j] = -Forcex;
-#endif
-  Particles[j].ifx    += Forcex;
-  Particles[k].ifx    -= Forcex;
-}
-
-
-// spatial hashing
-#ifndef NO_SH
-
-void Compute_force_neighbors(param Param, particle* Particles, long j,int bi,
-                             long* Neighbours, long* Boxes){
-  int m;                      //neighbour box id
-  int nbi;                    //box name
-  double dx_box;              // particle offset
-  long k;                     //particle index
-  double dx,dist;             // displacement between particles
-  
-  // NeighbouringBoxes[bi][bj][0] is box (bi,bj) itself
-  for (m=0;m<2;m++){
-    nbi=Param.NeighbouringBoxes[bi][m].i;           // x index of the mth neighbor
-    dx_box=Param.NeighbouringBoxes[bi][m].epsilonx; // x offset to be added to the particles in
-
-    //Loop through all particles k in box 
-    if (m==0) k = Neighbours[2*j+1]; // Start with next in same box
-    else      k = Boxes[nbi];        //Start with the first in neighbouring box
-  
-    //As long as there are particles in the box, iterate
-    while(k!=-1){
-
-      dx = Particles[j].x - Particles[k].x - dx_box; // positive if x_j>x_k
-
-      //If the particles are closer than Param.rmax, they interact
-      dist = (dx>=0)?dx:(-dx);
-      if (dist>=Param.rmax){
-        k=Neighbours[2*k+1]; // k is now the next particle in the list
-        continue;
-      }
-
-      // calculate the force
-      Pair_force(dx,dist,j,k,Particles,Param);
-      k=Neighbours[2*k+1]; // k is now the next particle in the list
-    }
-  }
-}
-
-
-void Loop_Force(param Param, particle* Particles, long* Neighbours, long* Boxes){
-  int bi; // Box index
-  long j; // Particle index
-
-  for (bi=0; bi<Param.NxBox; bi++){
-
-    //Loop through all the particles 'j' in the box.
-    j=Boxes[bi]; //Start with j being the 1st particle
-
-    //As long as j is not -1, compute its interactions with all the other particles
-    while(j!=-1){
-    
-      // Loop through the boxes
-      Compute_force_neighbors(Param, Particles, j, bi, Neighbours, Boxes);
-      
-      //We have included all the interactions between j and other particles. Now iterate over j
-      j=Neighbours[2*j+1];
-    }
-    // We are done with all particles in Boxes[bi][bj], iterate over the box
-  }
-}
-
-#else // no spatial hashing
-void Loop_Force(param Param, particle* Particles){
-  long i,j;
-  double dx,dist;
-
-  for (i=0; i<Param.N; i++){
-    for (j=0; j<i; j++){
-      dx = Particles[i].x - Particles[j].x;
-      if (dx> Param.Lx_half) dx -= Param.Lx;
-      if (dx<-Param.Lx_half) dx += Param.Lx;
-
-      dist = dx;
-      if (dx<0) dist=-dx;
-
-      if (dx>1.0) continue;
-      if (dx<-1.0) continue;
-
-      Pair_force(dx, dist, i, j, Particles, Param);
-    }
-  }
-}
-#endif
-
-
-#endif

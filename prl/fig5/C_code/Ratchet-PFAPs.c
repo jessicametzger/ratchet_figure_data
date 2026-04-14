@@ -38,14 +38,7 @@ typedef struct param{
   double final_time; //end of simulation (real time, not N timesteps)
   double sigma;      // interaction length
   double amp;        // interaction strength
-#ifdef FORCE_HARMONIC
   double max_amp;    // coefficient of force, = maximum amplitude (=amp/sigma)
-#elif defined FORCE_QUARTIC
-  double force_coef1;// coefficients of force in quartic model
-  double force_coef2;// coefficients of force in quartic model
-#elif defined FORCE_LINEAR
-  double force;
-#endif
   double rmax;       // interaction cutoff
   double rmax2;      // interaction cutoff ^2
   double rbox;       // width of spatial hashing boxes (spatial units)
@@ -57,11 +50,6 @@ typedef struct param{
   double StoreInterProfile;        // Interval between 2 storages of the pos profile
   double StoreInterPos;            // Interval between 2 storages of the position
   double StoreInterDisp;           // Interval between 2 storages of net displacements
-#ifdef TRACK
-  double Ntrack;     // number of particles whose complete trajectory to track
-#elif defined GIVEN_IC
-  char* IC_file;
-#endif
 } param;
   
 // Structure particle contains all the data needed to characterize the state of a particle
@@ -100,13 +88,9 @@ int main(int argc, char* argv[]){
   FILE* output_profile_m;          // File where m profile is stored
   FILE* output_pos;                // File where position is stored
   FILE* output_disp;               // File where integrate displacements are stored
-  FILE* output_traj;               // File where complete trajectories are stored
   long long seed;                  //  Seed of random number generator
   
   double* forces;                  // forces[i] is the force along x on particle i
-
-  double NetCrossings;             // Net number of particles that have crossed x=0 in
-                                   // current time interval
 
   double NextStoreCurrent;         // Next time after which the current is stored
   double NextStoreProfile;         // Next time after which the position profile is stored
@@ -130,7 +114,7 @@ int main(int argc, char* argv[]){
      initializing all variables 
   */
   
-  Initialize_parameters(argc, argv, &output_param, &output_current, &output_profile_rho, &output_profile_m, &output_pos, &output_disp, &output_traj, &Param, &_time, &prev_percentage, &Particles, &Displacements, &Integrated_Displacements, &forces, &Boxes, &Neighbors, &NextBoxes, &profile_rho, &profile_m, &seed, &NetCrossings, &NextStoreCurrent, &NextStoreProfile, &NextUpdateProfile, &NextStorePos, &NextStoreDisp);
+  Initialize_parameters(argc, argv, &output_param, &output_current, &output_profile_rho, &output_profile_m, &output_pos, &output_disp, &output_traj, &Param, &_time, &prev_percentage, &Particles, &Displacements, &Integrated_Displacements, &forces, &Boxes, &Neighbors, &NextBoxes, &profile_rho, &profile_m, &seed, &NextStoreCurrent, &NextStoreProfile, &NextUpdateProfile, &NextStorePos, &NextStoreDisp);
   
   Store_Parameters(argc, argv, output_param, Param, seed);
   
@@ -141,11 +125,7 @@ int main(int argc, char* argv[]){
   while (_time < Param.final_time){
     
     // Move the particles
-#ifdef NI
-    Update_Particles_NI(Param,Displacements,Particles,Integrated_Displacements, _time, &NetCrossings);
-#else
-    Update_Particles(Param,Displacements,Particles,Integrated_Displacements,forces, Neighbors, NextBoxes, Boxes, _time, &NetCrossings);
-#endif
+    Update_Particles(Param,Displacements,Particles,Integrated_Displacements,forces, Neighbors, NextBoxes, Boxes, _time);
     
     // Update time
     _time += Param.dt;
@@ -178,11 +158,6 @@ int main(int argc, char* argv[]){
     if(_time>NextStorePos-EPS){
       Store_Pos(Param,Particles,_time,output_pos);
       NextStorePos += Param.StoreInterPos;
-  
-      // If we are storing any complete trajectories, fflush them now.
-#ifdef TRACK
-      fflush(output_traj);
-#endif
     }
     
     // If the time is right, store the integrated displacements

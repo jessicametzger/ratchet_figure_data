@@ -2,16 +2,39 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import patches
 import os,sys
-
-sys.path.append(os.getcwd())
-import read_data as rd
-import mydefaults as md
-
-plt.rcParams.update(md.plt_rcparams)
+from types import SimpleNamespace
+import re
 
 
 ################################################################################################################
 # AUXILIARY FUNCTIONS
+
+def isnum(s):
+    try:
+        a=float(s)
+    except ValueError:
+        return False
+    return True
+
+# import parameter data from a simulation
+def get_params(paramfile):
+    f=open(paramfile,'r')
+    lines = f.readlines()
+    f.close()
+
+    params = [re.split(' is | = ',x.replace('\n','')) for x in lines if ' is ' in x or ' = ' in x]
+    params = {x[0]: x[1].split(' ')[0] for x in params}
+    to_del = []
+    to_add = []
+    for k in params.keys():
+        if isnum(params[k]):
+            params[k] = float(params[k])
+        if k.startswith('N'):
+            params[k] = int(params[k])
+        if type(params[k])==str and ',' in params[k]:
+            params[k] = np.array([float(x) for x in params[k].split(',')])
+    params = SimpleNamespace(**params)
+    return params
 
 # Bin 2d array 
 def bin_arr(arr,binw):
@@ -54,7 +77,7 @@ def v(xs,p):
 ################################################################################################################
 # READ DATA
 
-p = rd.get_params('param')
+p = get_params('data/21978-param')
 dx = p.Lx/p.Nbinx
 pd = p.__dict__
 vxs = pd['vx1,vx2,...']
@@ -62,21 +85,19 @@ vs = pd['v1,v2,...']
 p.vs = vs
 p.vxs = vxs
 
-Jprof = np.genfromtxt('Jprof_avg',delimiter='\t')
-FAprof = np.genfromtxt('FAprof_avg',delimiter='\t')
-Fintprof = np.genfromtxt('Fintprof_avg',delimiter='\t')
-sigIKprof = np.genfromtxt('sigIKprof_avg',delimiter='\t')
-sigAprof = np.genfromtxt('sigAprof_avg',delimiter='\t')
-disp = np.genfromtxt('disp_avg',delimiter='\t')
+FAprof = np.genfromtxt('data/FAprof_avg',delimiter='\t')
+Fintprof = np.genfromtxt('data/Fintprof_avg',delimiter='\t')
+sigIKprof = np.genfromtxt('data/sigIKprof_avg',delimiter='\t')
+sigAprof = np.genfromtxt('data/sigAprof_avg',delimiter='\t')
+disp = np.genfromtxt('data/disp_avg',delimiter='\t')
 
 
 ################################################################################################################
 # SHIFT, BIN, ETC. DATA
 
 shiftx = 5
-ishiftx = md.fint(shiftx/dx)
-ishiftx1 = md.fint(shiftx)
-Jprof = np.concatenate((Jprof[-ishiftx:,:],Jprof[:-ishiftx,:]),axis=0)
+ishiftx = int(shiftx/dx+1e-5)
+ishiftx1 = int(shiftx+1e-5)
 FAprof = np.concatenate((FAprof[-ishiftx:,:],FAprof[:-ishiftx,:]),axis=0)
 Fintprof = np.concatenate((Fintprof[-ishiftx:,:],Fintprof[:-ishiftx,:]),axis=0)
 sigIKprof = np.concatenate((sigIKprof[-ishiftx1:,:],sigIKprof[:-ishiftx1,:]),axis=0)
@@ -93,11 +114,11 @@ dsigIKdxprof[0] = (sigIKprof[1,:]-sigIKprof[-1,:])/2.0
 dsigIKdxprof[-1] = (sigIKprof[0,:]-sigIKprof[-2,:])/2.0
 
 xs_ = np.linspace(0,p.Lx-dx,p.Nbinx)
-xs1_ = np.linspace(0,p.Lx-1,md.fint(p.Lx))
+xs1_ = np.linspace(0,p.Lx-1,int(p.Lx))
 xs = xs_+dx/2.0
 xs1 = xs1_+0.5
 dx1 = 1
-binw = md.fint(1/dx)
+binw = int(1/dx+1e-5)
 print('bin size = ',binw)
 
 vs = v(xs,p)

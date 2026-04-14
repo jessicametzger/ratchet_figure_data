@@ -123,11 +123,6 @@ void Initialize_parameters(int argc, char* argv[],
   strcat(command_base, "StoreInterProfile "); argctarget ++;
   strcat(command_base, "StoreInterPos "); argctarget ++;
   strcat(command_base, "StoreInterDisp "); argctarget ++;
-#ifdef TRACK
-  strcat(command_base, "Ntrack "); argctarget++;
-#elif defined GIVEN_IC
-  strcat(command_base, "IC_file "); argctarget++;
-#endif
 
   strcat(command_base, "\n");
 
@@ -159,11 +154,6 @@ void Initialize_parameters(int argc, char* argv[],
   sprintf(name,"%s-disp",argv[i]);
   output_disp[0]=fopen(name,"w");
   
-#ifdef TRACK
-  sprintf(name,"%s-traj",argv[i]);
-  output_traj[0]=fopen(name,"w");
-#endif
-  
   i++;
   
   // Read in basic parameters
@@ -186,12 +176,6 @@ void Initialize_parameters(int argc, char* argv[],
   Param[0].StoreInterPos     = strtod(argv[i], NULL); i++;
   Param[0].StoreInterDisp    = strtod(argv[i], NULL); i++;
   
-#ifdef TRACK
-  Param[0].Ntrack            = strtod(argv[i], NULL); i++;
-#elif defined GIVEN_IC
-  Param[0].IC_file           = argv[i]; i++;
-#endif
-  
   // define parameters that are functions of the inputs and/or known
   NetCrossings[0]      = 0;
   NextStoreCurrent[0]  = Param[0].StoreInterCurrent;
@@ -205,14 +189,7 @@ void Initialize_parameters(int argc, char* argv[],
   Param[0].v0_a2_half  = Param[0].v0*Param[0].a2/2.;
   Param[0].rmax        = Param[0].sigma;
   Param[0].rmax2       = Param[0].rmax*Param[0].rmax;
-#ifdef FORCE_HARMONIC
   Param[0].max_amp     = Param[0].amp/Param[0].sigma;
-#elif defined FORCE_QUARTIC
-  Param[0].force_coef1 = 4*Param[0].amp/pow(Param[0].sigma,5);
-  Param[0].force_coef2 = 4*Param[0].amp/pow(Param[0].sigma,3);
-#elif defined FORCE_LINEAR
-  Param[0].force       = Param[0].amp/pow(Param[0].sigma,2);
-#endif
   Param[0].alphadt     = Param[0].alpha*Param[0].dt;
   Param[0].rbox        = Param[0].rmax;
   Param[0].Nbox        = (int) (floor(Param[0].L/Param[0].rbox)+EPS);
@@ -253,7 +230,6 @@ void Initialize_parameters(int argc, char* argv[],
   ConstructNextBoxes(Param[0], NextBoxes[0]);
 
 // initialize particle locations and polarizations  
-#ifdef RANDOM_IC
   for (i=0;i<Param[0].N;i++){
   
     // random initialize positions uniformly over interval
@@ -269,57 +245,6 @@ void Initialize_parameters(int argc, char* argv[],
     // initialize next flip time from exponential distribution
     Particles[0][i].next_time = -2*log(genrand64_real3())/Param[0].alpha;
   }
-  
-  
-#elif defined GIVEN_IC
-
-  // open file for reading
-  FILE *fp;
-  fp = fopen(Param[0].IC_file, "r");
-
-  // Read the first line to get the number of columns
-  int MAX_LINE_LEN=1024;
-  char line[MAX_LINE_LEN];
-
-  // 4 columns: time, particle ID, x, theta
-  int num_columns = 4;
-  char* pch;
-
-  // no header
-  // Read the file, line by line
-  // Note: this will throw an error if the number of lines doesn't equal N
-  // It also will only assign the particle ID's that are present in column 2 (--> error later if one missing)
-  double tmp, x_tmp;
-  int theta_tmp;
-  long id;
-  char *ptr;
-  while (fgets(line, MAX_LINE_LEN, fp) != NULL) {
-  
-    // read line to time, id, x, theta variables
-    sscanf(line, "%lg\t%ld\t%lg\t%d", &tmp, &id,  &x_tmp, &theta_tmp);
-    Particles[0][id].x = x_tmp;
-    Particles[0][id].theta = theta_tmp;
-    
-    // Add particle to its box and link to its neighbors
-    Particles[0][id].bi= (int) (floor(Particles[0][id].x/Param[0].rbox) + EPS);
-    AddinBox(id,Particles[0][id].bi,Boxes[0],Neighbors[0]);
-    
-    // initialize next flip time from exponential distribution
-    Particles[0][id].next_time = tmp - 2*log(genrand64_real3())/Param[0].alpha;
-  }
-  
-  // set the current time 
-  _time[0] = tmp;
-  
-  NextStoreCurrent[0]  += _time[0];
-  NextStoreProfile[0]  += _time[0];
-  NextUpdateProfile[0] += _time[0];
-  NextStorePos[0]      += _time[0];
-  NextStoreDisp[0]     += _time[0];
-
-  // Close the file
-  fclose(fp);
-#endif
 }
 
 /*
@@ -338,29 +263,7 @@ double vofx_function(double x, param Param){
 // Force_harmonic computes the repulsive harmonic force exerted by the particle k onto particle j
 // if dx>0, the force has to be positive
 double Force_harmonic(double dx, param Param){
-#ifdef FORCE_HARMONIC
   return Param.max_amp*dx;
-#endif
-}
-
-// compute the repulsive force due to a quartic function (differentiable over the whole kernel)
-// between particles. If dx>0, the force has to be positive.
-// force_coef1 = 4*amp/sigma^5, force_coef2 = 4*amp/sigma^3
-double Force_quartic(double dx, double dx2, param Param){
-#ifdef FORCE_QUARTIC
-  return -Param.force_coef1*dx2*dx + Param.force_coef2*dx;
-#endif
-}
-
-//compute the repulsive force due to a piecewise linear "tent" interaction potential
-double Force_linear(double dx, param Param){
-#ifdef FORCE_LINEAR
-  if (dx>0) {
-    return Param.force;
-  } else{
-    return -Param.force;
-  }
-#endif
 }
 
 
@@ -379,14 +282,7 @@ void Compute_force_same_box(long j,long* Neighbors,double* forces, param Param, 
   while(k!=-1){
   
     dx=Particles[j].x-Particles[k].x;// positive if x_j>x_k
-#ifdef FORCE_HARMONIC
     Force=Force_harmonic(dx,Param);
-#elif defined FORCE_QUARTIC
-    dist2=dx*dx;
-    Force=Force_quartic(dx,dist2,Param);
-#elif defined FORCE_LINEAR
-    Force=Force_linear(dx,Param);
-#endif
     forces[j] += Force;
     forces[k] -= Force;
     k=Neighbors[2*k+1]; // k is now the next particle in the list
@@ -419,13 +315,7 @@ void Compute_force_neighbors(long j,int bi,box* NextBoxes,particle* Particles,pa
     dist2=dx*dx;
     //If the particles are closer than Param.rmax, they interact
     if (dist2<Param.rmax2){
-#ifdef FORCE_HARMONIC
       Force=Force_harmonic(dx,Param);
-#elif defined FORCE_QUARTIC
-      Force=Force_quartic(dx,dist2,Param);
-#elif defined FORCE_LINEAR
-      Force=Force_linear(dx,Param);
-#endif
       forces[j] += Force;
       forces[k] -= Force;
     }
@@ -498,17 +388,10 @@ void Update_Particles(param Param,double* Displacements,particle* Particles, dou
     Particles[n].x += Displacements[n];
 
     // Take care of periodic boundary conditions
-#ifdef PBC
-    while(Particles[n].x>Param.L){
+    while(Particles[n].x>Param.L)
       Particles[n].x-=Param.L;
-      NetCrossings[0] += 1;
-    }
-
-    while(Particles[n].x<0){
+    while(Particles[n].x<0)
       Particles[n].x+=Param.L;
-      NetCrossings[0] -= 1;
-    }
-#endif
 
     // Update box membership
     newbi = (int) (floor(Particles[n].x/Param.rbox) + EPS);
@@ -544,17 +427,10 @@ void Update_Particles_NI(param Param,double* Displacements,particle* Particles, 
     Particles[n].x += Displacements[n];
 
     // Take care of periodic boundary conditions
-#ifdef PBC
-    while(Particles[n].x>Param.L){
+    while(Particles[n].x>Param.L)
       Particles[n].x-=Param.L;
-      NetCrossings[0] += 1;
-    }
-
-    while(Particles[n].x<0){
+    while(Particles[n].x<0)
       Particles[n].x+=Param.L;
-      NetCrossings[0] -= 1;
-    }
-#endif
 
     // Update the cumulated displacements
     Integrated_Displacements[n] += Displacements[n];
@@ -604,9 +480,6 @@ void Store_Parameters(int argc, char* argv[], FILE* output_param, param Param,
   fprintf(output_param,"StoreInterProfile is %lg\n", Param.StoreInterProfile);
   fprintf(output_param,"StoreInterPos is %lg\n", Param.StoreInterPos);
   fprintf(output_param,"StoreInterDisp is %lg\n", Param.StoreInterDisp);
-#ifdef TRACK
-  fprintf(output_param,"Ntrack is %lg\n", Param.Ntrack);
-#endif
   fflush(output_param);
 }
 
@@ -667,15 +540,3 @@ void Store_Profile(param Param,particle* Particles, long** profile_rho, long** p
   memset(profile_rho[0],0,Param.Nbin*sizeof(long));
   memset(profile_m[0],0,Param.Nbin*sizeof(long));
 }
-
-#ifdef TRACK
-// Store the complete trajectories (position and polarization) of first Ntrack particles
-void Store_Trajectories(param Param, particle* Particles, FILE* output_traj, double _time){
-  long n; //particle index
-  
-  for (n=0; n<Param.Ntrack; n++){
-    fprintf(output_traj,"%lg\t%ld\t%lg\t%lg\n",_time,n,Particles[n].x,Particles[n].theta);
-  }
-}
-#endif
-

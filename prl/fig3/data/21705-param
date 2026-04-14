@@ -1,0 +1,22 @@
+/home/jessica/Code/particles/ABPs_RTPs/abp-cub-sigA-sigIK-FA-Fint 21705 40 15 400 0.0005 700000 1 4 0.0,4.0,14.0,30.0 1.0,30.0,30.0,1.0 1 50 21705 700000 400 1 699900 700000 1 14000 
+Lx is 40
+Ly is 15
+N is 400
+dt is 0.0005
+tf is 700000
+tau is 1
+Nstep_v is 4
+vx1,vx2,... is 0.0,4.0,14.0,30.0
+v1,v2,... is 1.0,30.0,30.0,1.0
+a is 1
+k is 50
+seed is 21705
+StoreInterPos is 700000
+Nbinx is 400
+Nbiny is 1
+NstepProf is 699900
+StoreInterProf is 700000
+UpdateInterProf is 1
+StoreInterDisp is 14000
+
+run_time = 175499.2 s
