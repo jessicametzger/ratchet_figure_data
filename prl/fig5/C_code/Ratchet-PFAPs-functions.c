@@ -83,14 +83,10 @@ void ConstructNextBoxes(param Param, box* NextBoxes){
 
 
 void Initialize_parameters(int argc, char* argv[],
-  FILE** output_param,FILE** output_current, FILE** output_profile_rho, FILE** output_profile_m, FILE** output_pos, FILE** output_disp, FILE** output_traj,
+  FILE** output_param, FILE** output_pos, FILE** output_disp,
   param* Param, double* _time, double* prev_percentage,
   particle** Particles,double** Displacements, double** Integrated_Displacements, double** forces, long** Boxes, long** Neighbors, box** NextBoxes,
-  long** profile_rho, long** profile_m,
-  long long* seed,
-  double* NetCrossings, double* NextStoreCurrent, 
-  double* NextStoreProfile, double* NextUpdateProfile,
-  double* NextStorePos, double* NextStoreDisp){
+  long long* seed,double* NextStorePos, double* NextStoreDisp){
   
   long i;
   int argctarget=0;           // Number of parameters that should be used
@@ -117,10 +113,6 @@ void Initialize_parameters(int argc, char* argv[],
   strcat(command_base, "sigma "); argctarget ++;
   strcat(command_base, "amp "); argctarget ++;
   strcat(command_base, "seed "); argctarget ++;
-  strcat(command_base, "Nbin "); argctarget++;
-  strcat(command_base, "NstepProfile "); argctarget++;
-  strcat(command_base, "StoreInterCurrent "); argctarget ++;
-  strcat(command_base, "StoreInterProfile "); argctarget ++;
   strcat(command_base, "StoreInterPos "); argctarget ++;
   strcat(command_base, "StoreInterDisp "); argctarget ++;
 
@@ -138,15 +130,6 @@ void Initialize_parameters(int argc, char* argv[],
   // Read in file name and create files
   sprintf(name,"%s-param",argv[i]);
   output_param[0]=fopen(name,"w");
-
-  sprintf(name,"%s-current",argv[i]);
-  output_current[0]=fopen(name,"w");
-  
-  sprintf(name,"%s-profile_rho",argv[i]);
-  output_profile_rho[0]=fopen(name,"w");
-  
-  sprintf(name,"%s-profile_m",argv[i]);
-  output_profile_m[0]=fopen(name,"w");
 
   sprintf(name,"%s-pos",argv[i]);
   output_pos[0]=fopen(name,"w");
@@ -169,18 +152,10 @@ void Initialize_parameters(int argc, char* argv[],
   Param[0].sigma             = strtod(argv[i], NULL); i++;
   Param[0].amp               = strtod(argv[i], NULL); i++;
   seed[0]                    = strtod(argv[i], NULL); i++;
-  Param[0].Nbin              = strtod(argv[i], NULL); i++;
-  Param[0].NstepProfile      = strtod(argv[i], NULL); i++;
-  Param[0].StoreInterCurrent = strtod(argv[i], NULL); i++;
-  Param[0].StoreInterProfile = strtod(argv[i], NULL); i++;
   Param[0].StoreInterPos     = strtod(argv[i], NULL); i++;
   Param[0].StoreInterDisp    = strtod(argv[i], NULL); i++;
   
   // define parameters that are functions of the inputs and/or known
-  NetCrossings[0]      = 0;
-  NextStoreCurrent[0]  = Param[0].StoreInterCurrent;
-  NextStoreProfile[0]  = Param[0].StoreInterProfile;
-  NextUpdateProfile[0] = NextStoreProfile[0] - (2/Param[0].alpha) * (Param[0].NstepProfile-1);
   NextStorePos[0]      = Param[0].StoreInterPos;
   NextStoreDisp[0]     = Param[0].StoreInterDisp;
   Param[0].coef1       = 2*M_PI*Param[0].P/Param[0].L;
@@ -192,8 +167,7 @@ void Initialize_parameters(int argc, char* argv[],
   Param[0].max_amp     = Param[0].amp/Param[0].sigma;
   Param[0].alphadt     = Param[0].alpha*Param[0].dt;
   Param[0].rbox        = Param[0].rmax;
-  Param[0].Nbox        = (int) (floor(Param[0].L/Param[0].rbox)+EPS);
-  Param[0].binwidth    = (double) Param[0].L/((double) Param[0].Nbin);
+  Param[0].Nbox        = (int) (Param[0].L / Param[0].rbox + EPS);
   _time[0]             = 0;
   prev_percentage[0]   = 0;
   
@@ -201,21 +175,12 @@ void Initialize_parameters(int argc, char* argv[],
   
   // System width must be integer multiple of interaction length
   assert((double)Param[0].Nbox - Param[0].L/Param[0].rbox<EPS);
-  
-  // Must have enough time to make enough measurements between profile storages
-  assert(Param[0].NstepProfile*(2/Param[0].alpha)<Param[0].StoreInterProfile);
 
   // Allocate space for simulation data
   Particles[0]                = (particle*) malloc(sizeof(particle)*Param[0].N);
   Displacements[0]            = (double*) calloc(Param[0].N,sizeof(double));
   Integrated_Displacements[0] = (double*) calloc(Param[0].N,sizeof(double));
   forces[0]                   = (double*) calloc(Param[0].N,sizeof(double));
-  profile_rho[0]              = (long*) calloc(Param[0].Nbin,sizeof(long));
-  profile_m[0]                = (long*) calloc(Param[0].Nbin,sizeof(long));
-  
-  // clear out profile
-  memset(profile_rho[0],0,Param[0].Nbin*sizeof(long));
-  memset(profile_m[0],0,Param[0].Nbin*sizeof(long));
   
   // Construct list of 1st particle in each box (initialized as empty)
   Boxes[0] = (long*) calloc(Param[0].Nbox, sizeof(long));
@@ -361,7 +326,9 @@ void Loop_Force(particle* Particles, param Param, double* forces,long* Neighbors
 }
 
 
-void Update_Particles(param Param,double* Displacements,particle* Particles, double* Integrated_Displacements, double* forces, long* Neighbors, box* NextBoxes, long* Boxes, double _time, double* NetCrossings){
+void Update_Particles(param Param,double* Displacements,particle* Particles, 
+    double* Integrated_Displacements, double* forces, long* Neighbors, box* NextBoxes, 
+    long* Boxes, double _time){
   long n;
   int newbi;
   
@@ -407,36 +374,6 @@ void Update_Particles(param Param,double* Displacements,particle* Particles, dou
   }
 }
 
-void Update_Particles_NI(param Param,double* Displacements,particle* Particles, double* Integrated_Displacements, double _time, double* NetCrossings){
-  long n;
-  for ( n=0 ; n<Param.N ; n++ ){
-    // If the particle tumbles, it acquires a new direction
-    if ( Particles[n].next_time < _time + Param.dt){
-      Particles[n].theta = (Particles[n].theta>0)?(-1):1;
-      Particles[n].next_time += -2*log(genrand64_real3())/Param.alpha;
-    }
-    // Compute the displacement of each particle as x += v theta dt where theta= +/- 1
-    Displacements[n] = Param.dt * Particles[n].theta * vofx_function(Particles[n].x, Param);
-
-    // incorporate interactions
-  }
-  
-  for ( n=0 ; n<Param.N ; n++ ){
-  
-    // Once all displacement are computed, move the particles
-    Particles[n].x += Displacements[n];
-
-    // Take care of periodic boundary conditions
-    while(Particles[n].x>Param.L)
-      Particles[n].x-=Param.L;
-    while(Particles[n].x<0)
-      Particles[n].x+=Param.L;
-
-    // Update the cumulated displacements
-    Integrated_Displacements[n] += Displacements[n];
-  }
-}
-
 
 /*
 	Print percentage of completed simulation
@@ -474,22 +411,9 @@ void Store_Parameters(int argc, char* argv[], FILE* output_param, param Param,
   fprintf(output_param,"P is %d\n", Param.P);
   fprintf(output_param,"sigma is %lg\n", Param.sigma);
   fprintf(output_param,"amp is %lg\n", Param.amp);
-  fprintf(output_param,"Nbin is %d\n", Param.Nbin);
-  fprintf(output_param,"NstepProfile is %d\n", Param.NstepProfile);
-  fprintf(output_param,"StoreInterCurrent is %lg\n", Param.StoreInterCurrent);
-  fprintf(output_param,"StoreInterProfile is %lg\n", Param.StoreInterProfile);
   fprintf(output_param,"StoreInterPos is %lg\n", Param.StoreInterPos);
   fprintf(output_param,"StoreInterDisp is %lg\n", Param.StoreInterDisp);
   fflush(output_param);
-}
-
-
-// Store the distance traveled per unit time, on average, by each particle 
-// and its variance
-void Store_Current(param Param,double NetCrossings,double _time,FILE* output_current){
-  
-  fprintf(output_current,"%lg\t%lg\n",_time,NetCrossings);
-  fflush(output_current);
 }
 
 // Store the identities, positions, and orientations of all particles, with the time
@@ -510,33 +434,4 @@ void Store_Disp(param Param, double* Integrated_Displacements, double _time,FILE
     fprintf(output_disp,"%lg\t%ld\t%lg\n",_time,n,Integrated_Displacements[n]);
   }
   fflush(output_disp);
-}
-
-// Update density and magnetization profiles (add one to bin for each particle currently in it)
-void Update_Profile(param Param, particle* Particles, long* profile_rho, long* profile_m){
-  long i; // particle index
-  int j;  // index to add to. From 0 to Param.Nbin-1
-  
-  for (i=0; i<Param.N; i++){
-    j = (int) (floor(Particles[i].x/Param.binwidth)+EPS);
-    profile_rho[j] += 1;
-    profile_m[j]   += Particles[i].theta;
-  }
-}
-
-
-// Store the profile of positions and polarizations
-void Store_Profile(param Param,particle* Particles, long** profile_rho, long** profile_m, double _time, FILE* output_profile_rho, FILE* output_profile_m){
-  int j; // profile index
-  
-  for (j=0; j<Param.Nbin; j++){
-    fprintf(output_profile_rho, "%lg\t%lg\t%ld\n", _time, ((double)j)*Param.binwidth, profile_rho[0][j]);
-    fprintf(output_profile_m, "%lg\t%lg\t%ld\n", _time, ((double)j)*Param.binwidth, profile_m[0][j]);
-  }
-  fflush(output_profile_rho);
-  fflush(output_profile_m);
-      
-  // clear out profile
-  memset(profile_rho[0],0,Param.Nbin*sizeof(long));
-  memset(profile_m[0],0,Param.Nbin*sizeof(long));
 }

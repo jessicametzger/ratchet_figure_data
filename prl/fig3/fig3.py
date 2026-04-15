@@ -6,6 +6,16 @@ from types import SimpleNamespace
 import re
 
 
+plt_rcparams = {'text.usetex' : True,
+                'font.size' : 8,
+                'font.family' : 'serif',
+                'text.latex.preamble' : r"\usepackage{lmodern} \usepackage{amstext}",
+                'figure.figsize' : [3.4,3.4*0.7],
+                'figure.dpi': 200
+                }
+plt.rcParams.update(plt_rcparams)
+
+
 ################################################################################################################
 # AUXILIARY FUNCTIONS
 

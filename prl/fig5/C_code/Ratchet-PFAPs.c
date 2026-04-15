@@ -3,15 +3,13 @@ This code simulates N active particles in an activity landscape, to explore the 
 
 To measure ratchet currents, we simulate all the particles in parallel, whether they interact or not, and build their statistics until time t_final.
 
-We measure the current by counting the net number of particles that crossed x=0 between measurements.
-
-We store density and magnetization histograms. We occasionally store positions and integrated displacements.
 */
 
 
+#define EPS 1e-10
+
 #include <string.h>
 #include <stdio.h>
-#include "./options.h"
 #include <stdlib.h>
 #include <math.h>
 #include <time.h> // Library that measures dates and times
@@ -43,11 +41,6 @@ typedef struct param{
   double rmax2;      // interaction cutoff ^2
   double rbox;       // width of spatial hashing boxes (spatial units)
   int Nbox;          // number of spatial hashing boxes (=L/rbox)
-  double binwidth;   // width of density/magnetization profile bins
-  int Nbin;          // number of bins for density/magnetization profiles (=L/binwidth)
-  int NstepProfile;  // number of steps to use when storing histogram
-  double StoreInterCurrent;        // Interval between 2 storages of the current
-  double StoreInterProfile;        // Interval between 2 storages of the pos profile
   double StoreInterPos;            // Interval between 2 storages of the position
   double StoreInterDisp;           // Interval between 2 storages of net displacements
 } param;
@@ -83,18 +76,12 @@ int main(int argc, char* argv[]){
   double* Displacements;           // Array in which the displacement of all particles is stored
   double* Integrated_Displacements;// Array in which the integrated displacement of particles is stored, from which the current can be computed
   FILE* output_param;              // File where parameters are stored
-  FILE* output_current;            // File where current is stored
-  FILE* output_profile_rho;        // File where position profile is stored
-  FILE* output_profile_m;          // File where m profile is stored
   FILE* output_pos;                // File where position is stored
   FILE* output_disp;               // File where integrate displacements are stored
   long long seed;                  //  Seed of random number generator
   
   double* forces;                  // forces[i] is the force along x on particle i
 
-  double NextStoreCurrent;         // Next time after which the current is stored
-  double NextStoreProfile;         // Next time after which the position profile is stored
-  double NextUpdateProfile;        // Next time to add to density/magnetization profile
   double NextStorePos;             // Next time after which the position is stored
   double NextStoreDisp;            // Next time after which the displacement is stored
   
@@ -107,14 +94,13 @@ int main(int argc, char* argv[]){
   box* NextBoxes;                  // box after current. NextBoxes[i] is box i+1, or
                                    // box 0 if i=Nbox.
   
-  long* profile_rho;
-  long* profile_m;
-  
   /* 
      initializing all variables 
   */
   
-  Initialize_parameters(argc, argv, &output_param, &output_current, &output_profile_rho, &output_profile_m, &output_pos, &output_disp, &output_traj, &Param, &_time, &prev_percentage, &Particles, &Displacements, &Integrated_Displacements, &forces, &Boxes, &Neighbors, &NextBoxes, &profile_rho, &profile_m, &seed, &NextStoreCurrent, &NextStoreProfile, &NextUpdateProfile, &NextStorePos, &NextStoreDisp);
+  Initialize_parameters(argc, argv, &output_param, &output_pos, &output_disp, &Param, &_time, &prev_percentage, 
+    &Particles, &Displacements, &Integrated_Displacements, &forces, &Boxes, &Neighbors, &NextBoxes, &seed, 
+    &NextStorePos, &NextStoreDisp);
   
   Store_Parameters(argc, argv, output_param, Param, seed);
   
@@ -130,30 +116,6 @@ int main(int argc, char* argv[]){
     // Update time
     _time += Param.dt;
 
-    // If the time is right, we store the currents
-    if(_time>NextStoreCurrent-EPS){
-      Store_Current(Param,NetCrossings,_time,output_current);
-      NextStoreCurrent += Param.StoreInterCurrent;
-      NetCrossings = 0;
-    }
-    
-    // For an interval before NextStoreProfile, add to profiles.
-    // If NstepProfile=1, we only want to do this when _time=NextStoreProfile, so we ADD epsilon.
-    if (_time>NextUpdateProfile-EPS) {
-      Update_Profile(Param, Particles, profile_rho, profile_m);
-      NextUpdateProfile += 2/Param.alpha;
-    }
-
-    // If the time is right, we store the profile
-    if(_time>NextStoreProfile-EPS){
-      Store_Profile(Param,Particles, &profile_rho, &profile_m, _time,output_profile_rho,output_profile_m);
-      NextStoreProfile += Param.StoreInterProfile;
-      NextUpdateProfile = NextStoreProfile - (Param.NstepProfile-1)*2/Param.alpha;
-  
-      /*Also Print simulation progresses*/
-      PrintSimulationProgress(_time, Param.final_time, &prev_percentage);
-    }
-
     // If the time is right, we store the positions
     if(_time>NextStorePos-EPS){
       Store_Pos(Param,Particles,_time,output_pos);
@@ -164,13 +126,10 @@ int main(int argc, char* argv[]){
     if (_time>NextStoreDisp-EPS){
       Store_Disp(Param,Integrated_Displacements,_time,output_disp);
       NextStoreDisp += Param.StoreInterDisp;
+  
+      /*Also Print simulation progresses*/
+      PrintSimulationProgress(_time, Param.final_time, &prev_percentage);
     }
-    
-#ifdef TRACK
-    if (Param.Ntrack>0) {
-      Store_Trajectories(Param,Particles, output_traj, _time);
-    }
-#endif
   }
   printf("\n");
 

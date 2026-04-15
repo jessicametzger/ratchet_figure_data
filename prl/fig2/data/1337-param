@@ -1,0 +1,20 @@
+./C_code/pbp-sigIK-epr ./data/1337 50 15 400 0.0005 100000 1337 4 0,8,17,41 10,1,1,10 1 50 100000 500 150 20000000 10000 0.0005 
+Lx is 50
+Ly is 15
+N is 400
+dt is 0.0005
+tf is 1000
+seed is 1337
+Nstep_T is 4
+Txs is 0,8,17,41
+Ts is 10,1,1,10
+a is 1
+k is 50
+StoreInterPos is 1000
+Nbinx is 500
+Nbiny is 150
+NstepProf is 200000
+StoreInterProf is 100
+UpdateInterProf is 0.0005
+
+run_time = 1596.3 s

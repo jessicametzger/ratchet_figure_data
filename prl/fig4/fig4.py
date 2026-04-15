@@ -2,30 +2,67 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import os,sys
+from types import SimpleNamespace
+import re
 
-sys.path.append(os.getcwd())
-import read_data as rd
-import mydefaults as md
+plt_rcparams = {'text.usetex' : True,
+                'font.size' : 8,
+                'font.family' : 'serif',
+                'text.latex.preamble' : r"\usepackage{lmodern} \usepackage{amstext}",
+                'figure.figsize' : [3.4,3.4*0.7],
+                'figure.dpi': 200
+                }
+plt.rcParams.update(plt_rcparams)
 
-plt.rcParams.update(md.plt_rcparams)
+################################################################################################################
+# AUXILIARY FUNCTIONS
+
+def isnum(s):
+    try:
+        a=float(s)
+    except ValueError:
+        return False
+    return True
+
+# import parameter data from a simulation
+def get_params(paramfile):
+    f=open(paramfile,'r')
+    lines = f.readlines()
+    f.close()
+
+    params = [re.split(' is | = ',x.replace('\n','')) for x in lines if ' is ' in x or ' = ' in x]
+    params = {x[0]: x[1].split(' ')[0] for x in params}
+    to_del = []
+    to_add = []
+    for k in params.keys():
+        if isnum(params[k]):
+            params[k] = float(params[k])
+        if k.startswith('N'):
+            params[k] = int(params[k])
+        if type(params[k])==str and ',' in params[k]:
+            params[k] = np.array([float(x) for x in params[k].split(',')])
+    params = SimpleNamespace(**params)
+    return params
+
 
 
 ################################################################################################################
 # READ DATA
 
+# get current data for different tumbling rates alpha
 alphas = ['1.00','2.00','4.00','8.00']
 currents_all = []
 currents_all_th = []
 for alpha in alphas:
-    currents_all += [[float(alpha),np.genfromtxt('current_'+alpha)]]
-    currents_all_th += [[float(alpha),np.genfromtxt('current_th_'+alpha)]]
+    currents_all += [[float(alpha),np.genfromtxt('data/current_'+alpha)]]
+    currents_all_th += [[float(alpha),np.genfromtxt('data/current_th_'+alpha)]]
         
 
 ################################################################################################################
 # ACTIVITY AND POTENTIAL LANDSCAPES
 
 # get parameters of one sample simulation
-p = rd.get_params('param')
+p = get_params('data/alpha1.00/epsilon0.250/res-param')
 
 # trigonometric v and U fields
 def v(x,v0,a1,a2,d, P,L):
@@ -39,62 +76,22 @@ def Up(x,epsilon,a1,a2,b1,b2,P,L):
 def Upp(x,epsilon,a1,a2,b1,b2,P,L):
     return epsilon*(- b1 * (2*P*np.pi/L)*(2*P*np.pi/L)*np.sin(2 * np.pi * x*P / L) - b2 * (4*P*np.pi/L)*(4*P*np.pi/L)*np.sin(4 * np.pi * x*P / L))
 
+# system domain grid
+dx = p.L/(5000.*p.P)
+xs = np.arange(0, p.L+dx, dx)
+
+# activity landscape
+vs = v(xs, p.v0, p.a1, p.a2, p.d, p.P, p.L)
+vps = vp(xs, p.v0, p.a1, p.a2, p.d, p.P, p.L)
+
+# potential landscape
+Us = U(xs,p.epsilon,p.a1,p.a2,p.b1,p.b2,p.P,p.L)
+Ups = Up(xs,p.epsilon,p.a1,p.a2,p.b1,p.b2,p.P,p.L)
+Upps = Upp(xs,p.epsilon,p.a1,p.a2,p.b1,p.b2,p.P,p.L)
+
 
 ################################################################################################################
-# EFFECTIVE TEMPERATURE, PSEUDOPOTENTIAL, ETC. FIELDS
-
-
-def J_exact(xs, Us, Ups, Upps, vs, vps, mu, alpha):
-    '''
-    Calculate the exact current in a noninteracting system with
-    potential U(x) and activity landscape v(x), using the formula
-    from van Kampen 1988.
-    '''
-    stub = np.array([0])
-
-    # calculate effective fields given U, x, mu, alpha
-    # these fields are s.t. active system maps onto inhomogenous passive system
-    Teffs = vs ** 2 / (mu * alpha) - mu * Ups ** 2 / alpha
-    mueffs = mu / (1 - mu * Upps / alpha + mu * Ups * vps / (vs * alpha))
-    Veffs = Us - vs ** 2 / (2 * mu * alpha)
-    Veffs_nonlocal_integrand = (Ups ** 2) * vps / vs
-    Veffs_nonlocal = np.concatenate(
-        (stub, np.cumsum((xs[1:] - xs[:-1]) * (Veffs_nonlocal_integrand[1:] + Veffs_nonlocal_integrand[:-1]) / 2.)),
-        axis=0)
-    Veffs = Veffs + (mu / alpha) * Veffs_nonlocal
-    Veffps = Ups - vs * vps / (mu * alpha) + (mu / alpha) * Veffs_nonlocal_integrand
-
-    # calculate van Kampen effective nonlocal potential Phi
-    Phis_integrand = Veffps / Teffs
-    Phis = np.concatenate((stub, np.cumsum((xs[1:] - xs[:-1]) * (Phis_integrand[1:] + Phis_integrand[:-1]) / 2.)),
-                          axis=0)
-
-    # calculate exact expression
-    inner_integrand = np.exp(Phis) / mueffs
-    inner_integral = np.concatenate(
-        (stub, np.cumsum((xs[1:] - xs[:-1]) * (inner_integrand[1:] + inner_integrand[:-1]) / 2.)), axis=0)
-
-    denom_integrand = (np.exp(-Phis) / Teffs) * (
-                (inner_integral[-1] - inner_integral) + inner_integral * np.exp(Phis[-1]))
-    denom = np.trapezoid(denom_integrand, xs)
-
-    J_exact = (1 - np.exp(Phis[-1])) / denom
-    return J_exact
-    
-def Teff(xs, Ups, vs, mu, alpha):
-    return vs ** 2 / (mu * alpha) - mu * Ups ** 2 / alpha
-    
-def mueff(xs, Ups, Upps, vs, vps, mu, alpha):
-    return mu / (1 - mu * Upps / alpha + mu * Ups * vps / (vs * alpha))
-    
-def Veff(xs, Us, Ups, vs, vps, mu, alpha):
-    Veffs = Us - vs ** 2 / (2 * mu * alpha)
-    Veffs_nonlocal_integrand = (Ups ** 2) * vps / vs
-    Veffs_nonlocal = np.concatenate(
-        (stub, np.cumsum((xs[1:] - xs[:-1]) * (Veffs_nonlocal_integrand[1:] + Veffs_nonlocal_integrand[:-1]) / 2.)),
-        axis=0)
-    return Veffs + (mu / alpha) * Veffs_nonlocal
-    
+# EFFECTIVE PSEUDOPOTENTIAL FIELD
 
 def Phi(xs, Us, Ups, Upps, vs, vps, mu, alpha):
     stub = np.array([0])
@@ -116,24 +113,15 @@ def Phi(xs, Us, Ups, Upps, vs, vps, mu, alpha):
 
     return Phis
 
-# construct effective mu, T, V, etc. profiles
-dx = p.L/(5000.*p.P)
-xs = np.arange(0, p.L+dx, dx)
-vs = v(xs, p.v0, p.a1, p.a2, p.d, p.P, p.L)
-vps = vp(xs, p.v0, p.a1, p.a2, p.d, p.P, p.L)
-Us = U(xs,p.epsilon,p.a1,p.a2,p.b1,p.b2,p.P,p.L)
-Ups = Up(xs,p.epsilon,p.a1,p.a2,p.b1,p.b2,p.P,p.L)
-Upps = Upp(xs,p.epsilon,p.a1,p.a2,p.b1,p.b2,p.P,p.L)
-J_exact = J_exact(xs, Us, Ups, Upps, vs, vps, 1, p.alpha)
+# construct effective pseudopotential (first without potential)
 Phi0s = Phi(xs, Us*0, Ups*0, Upps*0, vs, vps, 1, p.alpha)
 Phis = Phi(xs, Us, Ups, Upps, vs, vps, 1, p.alpha)
-mueffs = mueff(xs, Ups, Upps, vs, vps, 1, p.alpha)
-Teffs = Teff(xs, Ups, vs, 1, p.alpha)
 
 
 ################################################################################################################
 # PLOT
 
+# colors
 cm=plt.get_cmap('viridis')
 colors=[cm(i/float(len(alphas)-1)) for i in range(len(alphas))]
 

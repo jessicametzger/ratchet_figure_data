@@ -82,83 +82,19 @@ def f_cub(xs,fxs,fs,Lx):
 #########################################################################################################################################
 # IMPORT DATA
 
-epr_file = 'res-EPR'
-sig_file = 'res-sigmaIKprof'
-T_file = 'res-Tprof'
-prof_file = 'res-prof'
-param_file = 'res-param'
+epr_series = np.genfromtxt('data/eprseries_avg',delimiter='\t')
+epr = np.genfromtxt('data/eprprof_avg',delimiter='\t')
+sig = np.genfromtxt('data/sigprof_avg',delimiter='\t')
 
-p = get_params(param_file)
+p = get_params('data/1337-param')
 dx_prof = p.Lx/p.Nbinx 
 dy_prof = p.Ly/p.Nbiny
 xs_prof = np.linspace(0,p.Lx - dx_prof, p.Nbinx)
 ys_prof = np.linspace(0,p.Lx - dy_prof, p.Nbiny)
 NstoreProf = int(p.tf / p.StoreInterProf + 1e-5)
 
-# entropy-production rate
-epr = np.genfromtxt(epr_file, delimiter='\t')
-
-# irving-kirkwood stress
-sig = np.genfromtxt(sig_file, delimiter='\t')[:,3:]
-
-# thermal stress
-Tprof = np.genfromtxt(T_file, delimiter='\t')[:,3:]
-
 # temperature landscape
 Ts = f_cub(xs_prof, p.Txs, p.Ts, p.Lx)
-
-
-#########################################################################################################################################
-# EPR DENSITY
-
-
-# avg over time (not x or y)
-# turn into epr PER UNIT VOL, per particle
-T_meas = NstoreProf*p.dt*p.NstepProf # effective amount of time over which EPR is measured
-unit_vol = dx_prof*dy_prof
-epr_tot_img = sum([epr[i*p.Nbinx:(i+1)*p.Nbinx,1:].T for i in range(NstoreProf)])/(T_meas*p.N*unit_vol)
-
-plt.hist(epr_tot_img.flatten())
-plt.show()
-
-# sum over x and y, then sum cumulatively over time
-series_EPR_tot = np.array([np.sum(epr[i*p.Nbinx:(i+1)*p.Nbinx,1:]) for i in range(NstoreProf)])
-series_EPR_tot = np.cumsum(series_EPR_tot)
-
-
-#########################################################################################################################################
-# IRVING-KIRKWOOD STRESS
-
-# the grid is coarser for measurements of the IK stress tensor
-xs_sig = np.linspace(0,p.Lx-1,int(p.Lx))
-ys_sig = np.linspace(0,p.Ly-1,int(p.Ly))
-
-# average over different time points
-sig_tot = sum([sig[i*int(p.Lx*3):(i+1)*int(p.Lx*3),:] for i in range(NstoreProf)]) / (NstoreProf*p.NstepProf*p.N*p.dt)
-
-# average over y
-sig_tot_vs_x = np.zeros((int(p.Lx),3))
-sig_tot_vs_x[:,0] = np.sum(sig_tot[:int(p.Lx)],axis=1) / p.Ly
-sig_tot_vs_x[:,1] = np.sum(sig_tot[int(p.Lx):int(p.Lx*2)],axis=1) / p.Ly
-sig_tot_vs_x[:,2] = np.sum(sig_tot[int(p.Lx*2):int(p.Lx*3)],axis=1) / p.Ly
-
-
-
-#########################################################################################################################################
-# THERMAL STRESS
-
-Tprof = Tprof / (p.NstepProf*p.N*dx_prof)
-
-# average over different time points
-Tprof = sum([Tprof[i*p.Nbinx:(i+1)*p.Nbinx] for i in range(NstoreProf)]) / NstoreProf
-
-# average over y
-Tprof = np.sum(Tprof,axis=1)/p.Ly
-
-# make coarse version to sum with irving-kirkwood stress
-binw = int(1 / dx_prof + 1e-5)
-Tprof_coarse = sum([Tprof[i::binw] for i in range(binw)]) / binw
-
 
 
 #########################################################################################################################################
@@ -178,12 +114,12 @@ ax0 = fig.add_subplot(gs[0, 0],sharex=ax2)
 axs = [ax0,ax1,ax2]
 
 # colormap for epr density
-rng = np.max(np.abs(epr_tot_img))
+rng = np.max(np.abs(epr))
 colors1 = plt.cm.ocean(np.linspace(0., 1, 128))
 colors2 = plt.cm.hot(np.flip(np.linspace(0, 1, 128)))
 colors_ = np.vstack((colors1, colors2))
 cmap = colors.LinearSegmentedColormap.from_list('my_colormap', colors_)
-epr_plot = axs[1].imshow(epr_tot_img, extent=(0,p.Lx,0,p.Ly), origin='lower', cmap=cmap, 
+epr_plot = axs[1].imshow(epr.T, extent=(0,p.Lx,0,p.Ly), origin='lower', cmap=cmap, 
                          vmin=-rng, vmax=rng,aspect='auto') 
 cbar_ax = fig.add_subplot(gs[1, 1])
 cbar_ax_inset = inset_axes(cbar_ax, width="100%", height="90%", 
@@ -193,9 +129,9 @@ cbar_ax_inset = inset_axes(cbar_ax, width="100%", height="90%",
 cbar = fig.colorbar(epr_plot, cax=cbar_ax_inset, pad=0.1)
 cbar.set_label(r'$\hat{s}(\mathbf{r})$',rotation='horizontal')
 cbar.ax.yaxis.set_label_coords(1,1.25)
-cbar.ax.set_yticks([-1,0,1],labels=['-1',r'$0$',r'$1$'])
+cbar.ax.set_yticks([-0.005,0,0.005],labels=['-0.005',r'$0$',r'$0.005$'])
 cbar.ax.tick_params(axis='y', which='both', length=2, pad=1)
-cbar.ax.set_ylim(ymin=-1,ymax=1)
+cbar.ax.set_ylim(ymin=-0.0052)
 
 for spine in cbar_ax.spines.values():
     spine.set_visible(False)
@@ -218,24 +154,24 @@ cbar_ax_inset.spines['bottom'].set_visible(True)
 cbar_ax_inset.spines['left'].set_visible(True)
 
 # stress plot
-axs[2].plot(xs_sig+1/2., sig_tot_vs_x[:,0]+Tprof_coarse, color=c_stot,ls='--',label=r'$-\mathbf{\sigma}^{xx}_{\textnormal{\tiny tot}}$')
-axs[2].plot(xs_prof+dx_prof/2., Tprof, color=c_sid,label=r'$\rho T$')
-axs[2].plot(xs_sig+1/2., sig_tot_vs_x[:,0], color=c_sIK, label=r'$-\mathbf{\sigma}^{xx}_{\textnormal{\tiny IK}}$')
+axs[2].plot(sig[:,0]+1/2., sig[:,1]+sig[:,4], color=c_stot,ls='--',label=r'$-\mathbf{\sigma}^{xx}_{\textnormal{\tiny tot}}$')
+axs[2].plot(sig[:,0]+1/2., sig[:,4], color=c_sid,label=r'$\rho T$')
+axs[2].plot(sig[:,0]+1/2., sig[:,1], color=c_sIK, label=r'$-\mathbf{\sigma}^{xx}_{\textnormal{\tiny IK}}$')
 
 # entropy production time series inset
 ax_inset = inset_axes(axs[1], width="18%", height="35%",
                       bbox_to_anchor=(0.65, -0.6, 1.44, 1.6),
                       bbox_transform=axs[1].transAxes, loc='upper left')
-ax_inset.plot(np.linspace(0,p.tf,NstoreProf+1), [0]+list(series_EPR_tot), color='black')
-ax_inset.text(.01*p.tf,np.max(series_EPR_tot*.7),r'$S(t)$')
-ax_inset.text(0.9*p.tf,np.max(series_EPR_tot*0.05),r'$t$')
+ax_inset.plot(np.linspace(0,p.tf,NstoreProf+1), [0]+list(epr_series), color='black')
+ax_inset.text(.01*p.tf,np.max(epr_series*.7),r'$S(t)$')
+ax_inset.text(0.9*p.tf,np.max(epr_series*0.05),r'$t$')
 ax_inset.tick_params(axis='x', which='both', pad=1,length=2)
 ax_inset.tick_params(axis='y', which='both', pad=1,length=2)
 ax_inset.set_xticks([0,1e5],labels=['0',r'$10^5$'])
 ax_inset.set_xlim(xmin=0,xmax=p.tf)
 ax_inset.set_ylim(ymin=0)
 ax_inset.xaxis.set_label_coords(0.5,-0.08)
-ax_inset.set_yticks([0,2e5],labels=['0',r'$2\hspace{-0.2em}\times\hspace{-0.2em}10^5$'])
+ax_inset.set_yticks([0,2e6],labels=['0',r'$2\hspace{-0.2em}\times\hspace{-0.2em}10^6$'])
 
 fig.add_subplot(gs[0, 1]).axis('off')
 
@@ -284,7 +220,7 @@ plt.setp(axs[1].get_xticklabels(), visible=False)
 gs.update(hspace=0)
 plt.subplots_adjust(left=0.091,bottom=0.07,right=0.9,top=0.98)
 
-plt.savefig(param_file.split('-')[0]+'_EPR_tot.pdf',dpi=1000)
-plt.savefig(param_file.split('-')[0]+'_EPR_tot.png',dpi=1000)
+plt.savefig('EPR_tot.pdf',dpi=1000)
+plt.savefig('EPR_tot.png',dpi=1000)
 
 
