@@ -1,19 +1,19 @@
-PBP/pbp-ni PBP-ni 80 50 800 0.00025 10000.0 4976 5 0,40,42.5,62.5,75 20,20,1,1,20 10000 100 800 1 5000 10000 2 
+PBP/pbp-ni PBP-ni 80 50 800 0.00025 1000000.0 4976 5 0,40,42.5,62.5,75 20,20,1,1,20 1000000 10000 800 1 500000 1000000 2 
 Lx is 80
 Ly is 50
 N is 800
 dt is 0.00025
-tf is 10000
+tf is 1e+06
 seed is 4976
 Nstep_T is 5
 Txs is 0,40,42.5,62.5,75
 Ts is 20,20,1,1,20
-StoreInterPos is 10000
-StoreInterDisp is 100
+StoreInterPos is 1e+06
+StoreInterDisp is 10000
 Nbinx is 800
 Nbiny is 1
-NstepProf is 5000
-StoreInterProf is 10000
+NstepProf is 500000
+StoreInterProf is 1e+06
 UpdateInterProf is 2
 
-run_time = 770.2 s
+run_time = 120661.4 s
