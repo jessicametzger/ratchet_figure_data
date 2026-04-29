@@ -1,0 +1,22 @@
+../../inv_h-Tofx-Uofx-cubic-epr-a 1.0_329723/res 20 5 200 0.00025 200000.0 20 1 1 1 0 2.5 2.5 20 1 19.0 0 2.5 2.5 20 1 50 329723 200 1 40000.0 20000.0 2 40000.0 20000.0 2 40000.0 20000.0 2 20000.0 20000.0 
+Lx is 20
+Ly is 5
+N is 200
+dt is 0.00025
+tf is 200000
+Nstep_T is 3
+Txs is 0,2.5,20
+Ts is 20,1,20
+Nstep_U is 3
+Uxs is 0,2.5,20
+Us is 0,19.0,0
+a is 1
+k is 50
+seed is 329723
+Nbinx is 200
+Nbiny is 1
+StoreInterProf is 40000
+NstepProf is 20000
+UpdateInterProf is 2
+StoreInterPos is 20000
+StoreInterDisp is 20000

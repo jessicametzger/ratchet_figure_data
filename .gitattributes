@@ -24,7 +24,8 @@
 # --- Other ---
 **/*.C                     export-ignore
 **/avg_data.py             export-ignore
+**/get_data.py             export-ignore
 **/*.sh                    export-ignore
-**/*.md                    export-ignore
+**/README.md               export-ignore
 **/*.h                     export-ignore
 **/C_code/                 export-ignore

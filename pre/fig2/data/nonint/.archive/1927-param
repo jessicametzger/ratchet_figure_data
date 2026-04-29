@@ -1,0 +1,20 @@
+../../C_code/upbps-ni-cub-disp-prof-J-sig 1927 60 15 700 0.00025 200.0 1927 1 4 0,10,20,50 20,1,1,20 200 20 600 1 200 200 1 
+Lx is 60
+Ly is 15
+N is 700
+dt is 0.00025
+tf is 200
+seed is 1927
+gamma is 1
+Nstep_T is 4
+Txs is 0,10,20,50
+Ts is 20,1,1,20
+StoreInterPos is 200
+StoreInterDisp is 20
+Nbinx is 600
+Nbiny is 1
+NstepProf is 200
+StoreInterProf is 200
+UpdateInterProf is 1
+
+run_time = 26.8 s

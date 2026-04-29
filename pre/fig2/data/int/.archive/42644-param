@@ -1,0 +1,22 @@
+../../C_code/upbps-cub-disp-prof-J-sig 42644 60 15 700 0.00025 200.0 42644 1 4 0,10,20,50 20,1,1,20 1 50 200 20 600 1 200 200 1 
+Lx is 60
+Ly is 15
+N is 700
+dt is 0.00025
+tf is 200
+seed is 42644
+gamma is 1
+Nstep_T is 4
+Txs is 0,10,20,50
+Ts is 20,1,1,20
+a is 1
+k is 50
+StoreInterPos is 200
+StoreInterDisp is 20
+Nbinx is 600
+Nbiny is 1
+NstepProf is 200
+StoreInterProf is 200
+UpdateInterProf is 1
+
+run_time = 229.0 s

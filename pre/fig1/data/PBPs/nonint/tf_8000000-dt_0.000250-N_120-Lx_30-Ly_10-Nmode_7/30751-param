@@ -1,0 +1,19 @@
+/home/jessica/Code/particles/Brownian/OD/pbp-ni-disp-prof-J PBPs/nonint/2025_10_28/tf_8000000-dt_0.000250-N_120-Lx_30-Ly_10-Nmode_7/30751 30 10 120 0.000250 8000000 30751 7 0,2,10,12,20,22,30 2.5,1,2.5,1,2.5,1,2.5 8000000 400000 300 100 7999000 8000000 1 
+Lx is 30
+Ly is 10
+N is 120
+dt is 0.00025
+tf is 8e+06
+seed is 30751
+Nstep_T is 7
+Txs is 0,2,10,12,20,22,30
+Ts is 2.5,1,2.5,1,2.5,1,2.5
+StoreInterPos is 8e+06
+StoreInterDisp is 400000
+Nbinx is 300
+Nbiny is 100
+NstepProf is 7999000
+StoreInterProf is 8e+06
+UpdateInterProf is 1
+
+run_time = 267027.7 s
