@@ -125,7 +125,7 @@ Phis = Phi(xs, Us, Ups, Upps, vs, vps, 1, p.alpha)
 cm=plt.get_cmap('viridis')
 colors=[cm(i/float(len(alphas)-1)) for i in range(len(alphas))]
 
-fig = plt.figure(figsize=(8.6/2.54, 8.6*.4/2.54))
+fig = plt.figure(figsize=(3.4, 3.4*.4))
 gs = gridspec.GridSpec(2, 2, height_ratios=[1, 1], hspace=0, wspace=0.05)
 
 # Create the subplots on the left side with shared x-axis
@@ -191,11 +191,19 @@ ax2.xaxis.set_label_coords(0.95,-0.04)
 ax2.set_xlim(xmin=0,xmax=p.L)
 ax2.set_xticks([0,10,20],labels=[r'$0$',r'$L_x$',r'$2L_x$'])
 
+ax1.set_ylabel('(a)',rotation='horizontal')
+ax1.yaxis.set_label_coords(-0.06,0.82)
+
+ax2.set_ylabel('(b)',rotation='horizontal')
+ax2.yaxis.set_label_coords(-0.06,0.82)
+
+ax4.text(0.025,0.0085,'(c)',ha='left',va='top')
+
 # adjust axis ticks
 for ax in [ax1,ax2,ax4]:
     ax.tick_params(axis='both',which='both',direction='in',pad=2)
 
-plt.subplots_adjust(bottom=0.11,left=0.04,right=.91,top=.97)
+plt.subplots_adjust(bottom=0.11,left=0.05,right=.91,top=.97)
 
 
 plt.savefig('noninteract_simple.pdf', dpi=1000)

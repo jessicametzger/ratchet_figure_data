@@ -29,3 +29,4 @@
 **/README.md               export-ignore
 **/*.h                     export-ignore
 **/C_code/                 export-ignore
+**/*.zip                   export-ignore

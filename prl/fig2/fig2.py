@@ -119,7 +119,7 @@ colors1 = plt.cm.ocean(np.linspace(0., 1, 128))
 colors2 = plt.cm.hot(np.flip(np.linspace(0, 1, 128)))
 colors_ = np.vstack((colors1, colors2))
 cmap = colors.LinearSegmentedColormap.from_list('my_colormap', colors_)
-epr_plot = axs[1].imshow(epr.T, extent=(0,p.Lx,0,p.Ly), origin='lower', cmap=cmap, 
+epr_plot = axs[1].imshow(epr, extent=(0,p.Lx,0,p.Ly), origin='lower', cmap=cmap, 
                          vmin=-rng, vmax=rng,aspect='auto') 
 cbar_ax = fig.add_subplot(gs[1, 1])
 cbar_ax_inset = inset_axes(cbar_ax, width="100%", height="90%", 
@@ -219,6 +219,23 @@ plt.setp(axs[1].get_xticklabels(), visible=False)
 # plot geometry
 gs.update(hspace=0)
 plt.subplots_adjust(left=0.091,bottom=0.07,right=0.9,top=0.98)
+
+
+# add (a), (b), etc.
+edgewidth = 0.5
+pad = 1.25
+fontsize=8.0
+labels=['(a)','(b)','(c)']
+for i,ax in enumerate(axs):
+    bbox = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+    width, height = bbox.width, bbox.height
+    pad_x = pad / 72 / width
+    pad_y = pad / 72 / height
+    inside_pad = pad/fontsize
+    print(pad_x,pad_y)
+    text = ax.text(pad_x,1-pad_y,labels[i],ha='left',va='top',transform=ax.transAxes,
+                       bbox=dict(boxstyle='square,pad='+str(inside_pad),edgecolor='black',facecolor='white',lw=edgewidth))
+    text.set_clip_on(True)
 
 plt.savefig('EPR_tot.pdf',dpi=1000)
 plt.savefig('EPR_tot.png',dpi=1000)

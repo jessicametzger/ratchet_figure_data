@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import os,sys
+from pdf2image import convert_from_path
 from types import SimpleNamespace
 import re
 from scipy.ndimage import convolve
@@ -52,7 +53,7 @@ def get_params(paramfile):
 # IMPORT DATA
 
 
-N_folders = [os.path.join('data',x) for x in os.listdir('data') if x.startswith('N') and os.path.isdir(x)]
+N_folders = [os.path.join('data',x) for x in os.listdir('data') if x.startswith('N') and os.path.isdir(os.path.join('data',x))]
 N_folders = sorted(N_folders, key=lambda x: int(x.split('/')[-1].replace('N',''))) 
 
 Js_all_N = []
@@ -69,6 +70,15 @@ p = get_params(sample_seed)
 
 ################################################################################################################
 # CALCULATE THEORETICAL CURRENT, PERTURBATIVELY
+
+# convolution routine
+# computes integral of arr(x+y)*ker(y), with PBC
+# Must flip ker because of how we write force calculation in the theory
+def conv(xs, ker, arr):
+    return convolve(arr, ker, mode='wrap')*(xs[1]-xs[0])
+    
+# to append to beginning of indefinite integral arrays
+stub=np.array([0])
 
 # activity landscape
 def v(x,v0,a1,a2,P,L):
@@ -210,6 +220,9 @@ axs[1].set_yticks([0.001,0.002],labels=['0.001','0.002'])
 axs[1].set_xticks([0,9,18],labels=['0','9','18'])
 axs[1].tick_params(axis='y',direction='in',pad=-24)
 axs[1].tick_params(axis='x',pad=2,direction='in')
+
+axs[0].text(0.025,0.95,'(a)',va='top',ha='left')
+axs[1].text(22*.025,.0026*.95,'(b)',va='top',ha='left')
 
 plt.subplots_adjust(left=0,right=0.99,bottom=0.1,top=0.99,wspace=0)
 
