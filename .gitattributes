@@ -20,8 +20,10 @@
 **/*.DS_Store              export-ignore
 **/__pycache__/            export-ignore
 **/*.pyc                   export-ignore
+**/.*/                     export-ignore
 
 # --- Other ---
+**/*.patch                 export-ignore
 **/*.C                     export-ignore
 **/avg_data.py             export-ignore
 **/get_data.py             export-ignore
