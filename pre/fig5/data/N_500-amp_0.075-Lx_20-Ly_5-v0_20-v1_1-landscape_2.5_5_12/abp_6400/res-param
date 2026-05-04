@@ -1,0 +1,26 @@
+../../ratchet-inv_h-abp-cubic-force-sigma abp_6400/res 20 5 500 0.0005 20000.0 1.0 20 1 2.5 5 12 1 1 0.075 6400 200 1 2000.0 4000.0 2000.0 2000.0 2000.0 4000.0 2000.0 4000.0 
+Lx is 20
+Ly is 5
+N is 500
+dt is 0.0005
+final_time is 20000
+Dr is 1
+v0 is 20
+v1 is 1
+v_center1 is 2.5
+v_center2 is 5
+v_right is 12
+P is 1
+sigma is 1
+amp is 0.075
+seed is 6400
+Nbinx is 200
+Nbiny is 1
+NstepProfile is 2000
+StoreInterProfile is 4000
+StoreInterPos is 2000
+StoreInterDisp is 2000
+NstepForceProfile is 2000
+StoreInterForceProfile is 4000
+NstepSigma is 2000
+StoreInterSigma is 4000
