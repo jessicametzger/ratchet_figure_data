@@ -37,7 +37,7 @@ def get_params(paramfile):
 ################################################################################################################
 # READ IN PARAMETER INFO
 
-supf = '/home/jessica/Projects/Ratchet/1D_RTPs/strong_current/new_L10_dt0.0005_v020_a11_a20.8'
+supf = os.getcwd()
 N_folders = [os.path.join(supf,x) for x in os.listdir(supf) if x.startswith('N') and os.path.isdir(x)]
 N_folders = sorted(N_folders, key=lambda x: int(x.split('/')[-1].replace('N',''))) 
 
