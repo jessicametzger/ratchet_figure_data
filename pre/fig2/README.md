@@ -20,8 +20,8 @@ Finally, the figure is generated using the script ``fig2.py``, which uses the pa
     * ``UD-PBPs-2D.c`` Main simulation code for UD PBPs
     * ``UD-PBPs-2D-functions.c`` Functions for the UD PBP simulations
     * ``options.h`` Pre-compiler options for the UD PBP simulations
-    * ``abp-cub-disp-prof-J`` Compiled interacting UD PBP simulator
-    * ``abp-ni-disp-prof-J`` Compiled non-interacting UD PBP simulator
+    * ``upbps-cub-disp-prof-J-sig`` Compiled interacting UD PBP simulator
+    * ``upbps-ni-cub-disp-prof-J-sig`` Compiled non-interacting UD PBP simulator
 * ``data/``
     * ``get_data.py`` Gets the results from the C simulations and outputs in the format needed for the ``fig2.py`` script
     * ``int/``
