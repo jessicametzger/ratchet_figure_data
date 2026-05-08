@@ -2,31 +2,11 @@
 
 This directory contains code and data necessary for generating Fig. 7.
 
-The data is generated through simulation of the C code contained in the directory ``C_code/``. The compiled code is looped by the bash scripts ``data/int/loop.sh`` (interacting) and ``data/nonint/loop.sh`` (non-interacting). It generates data that it saves in the folders ``data/int/`` and ``data/nonint/``. A copy of the data is already there.
-
-The data is parsed using the script ``data/get_data.py`` and left in the folders ``data/int/`` and ``data/nonint/``. A copy of the parsed data is already there.
-
-Finally, the figure is generated using the script ``fig7.py``, which uses the parsed data in the ``data/int/`` and ``data/nonint/`` folders.
+The figure is generated using the script ``fig7.py``, which uses the parsed data in the ``data/int/`` and ``data/nonint/`` folders.
 
 * ``fig7.py`` Code to create figure
-* ``C_code/``
-    * ``util/``
-        * ``inhom_fluct.c`` functions to define cubic inhomogeneous fluctuation landscape
-        * ``PFs.c`` functions for calculating pairwise forces
-        * ``spatial_hashing.c`` functions for looping through particle force calculations using spatial hashing algorithm
-        * ``util.c`` miscellaneous functions
-        * ``mt64.h`` For the random-number generator
-        * ``mt19937-64.c`` For the random-number generator
-    * ``AOUPs-2D.c`` Main simulation code for AOUPs
-    * ``AOUPs-2D-functions.c`` Functions for the AOUP simulations
-    * ``options.h`` Pre-compiler options for the AOUP simulations
-    * ``aoups-cub-disp-prof-sig `` Compiled interacting AOUP simulator
-    * ``aoups-ni-cub-disp-prof-sig `` Compiled non-interacting AOUP simulator
 * ``data/``
-    * ``get_data.py`` Gets the results from the C simulations and outputs in the format needed for the ``fig2.py`` script
     * ``int/``
-        * ``run.sh`` script that runs simulation of interacting AOUPs with provided parameters
-        * ``loop.sh`` script that repeatedly calls ``run.sh`` for different random number seeds
         * ``prof_avg`` averaged density profile over all seeds in this folder
         * ``disp_avg`` averaged particle displacement over time over all seeds in this folder
         * ``disp_err`` standard error of the mean particle displacement over time over all seeds in this folder
@@ -39,8 +19,6 @@ Finally, the figure is generated using the script ``fig7.py``, which uses the pa
         * ``XXXXX-sigmaIKprof`` interaction (Irving-Kirkwood) stress density data for seed ``XXXXX``
         * ``XXXXX-pos`` particle position data for seed ``XXXXX``
     * ``nonint/``
-        * ``run.sh`` script that runs simulation of non-interacting AOUPs with provided parameters
-        * ``loop.sh`` script that repeatedly calls ``run.sh`` for different random number seeds
         * ``prof_avg`` averaged density profile over all seeds in this folder
         * ``disp_avg`` averaged particle displacement over time over all seeds in this folder
         * ``disp_err`` standard error of the mean particle displacement over time over all seeds in this folder

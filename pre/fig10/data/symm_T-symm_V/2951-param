@@ -1,0 +1,22 @@
+/home/jessica/Code/particles/Brownian/OD/pbp-ni-Tofx-Fofx-disp-prof-J-F-T 2951 40 15 200 0.0001 100000 2951 10 0,4,8,12,16,20,24,28,32,36 4,10,4,10,4,10,4,10,4,10 10 0,4,8,12,16,20,24,28,32,36 4,-4,4,-4,4,-4,4,-4,4,-4 100000 2000 200 1 99900 100000 1 
+Lx is 40
+Ly is 15
+N is 200
+dt is 0.0001
+tf is 100000
+seed is 2951
+Nstep_T is 10
+Txs is 0,4,8,12,16,20,24,28,32,36
+Ts is 4,10,4,10,4,10,4,10,4,10
+Nstep_F is 10
+Fxs is 0,4,8,12,16,20,24,28,32,36
+Fs is 4,-4,4,-4,4,-4,4,-4,4,-4
+StoreInterPos is 100000
+StoreInterDisp is 2000
+Nbinx is 200
+Nbiny is 1
+NstepProf is 99900
+StoreInterProf is 100000
+UpdateInterProf is 1
+
+run_time = 17429.5 s

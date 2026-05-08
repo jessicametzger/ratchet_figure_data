@@ -1,0 +1,3 @@
+#!/bin/bash
+
+/home/jessica/Code/particles/Brownian/OD/pbp-ni-Fofx-disp-prof-J-F-T $1 40 15 200 0.0001 100000 $1 7 8 5,6,8,9,20,21,32,33 0,4,4,0,0,-1,-1,0 100000 2000 200 1 99900 100000 1
